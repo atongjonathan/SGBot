@@ -1,0 +1,10 @@
+*__pycache__ 
+/venv
+/telegram-bot-api
+/.idea
+logs.txt
+.env
+.cache
+/.local
+spot.exe
+config.env
