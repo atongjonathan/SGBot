@@ -164,11 +164,11 @@ class SongHandler:
                 os.remove(file_path)
                 copied_msg = self.bot.forward_message(
                     DB_CHANNEL, chat_id, song.message_id)
-            data = copied_msg.json['audio']
-            data["message_id"] = copied_msg.message_id
-            self.database.create_table()
-            self.database.insert_json_data(data)
-            self.logger.info("Sent successfully and added to db")
+                data = copied_msg.json['audio']
+                data["message_id"] = copied_msg.message_id
+                self.database.create_table()
+                self.database.insert_json_data(data)
+                self.logger.info("Sent successfully and added to db")
 
     def send_preview(self, chat_id, title, performer,
                      reply_markup, preview_url, hashtag):
