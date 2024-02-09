@@ -98,7 +98,6 @@ class UserHandler:
         song_reply = 'Send me the song title followed by the artist separated by a "-" for optimal results'
         queries = message.queries
         song_handler = SongHandler(bot)
-        Vars.isPreview = True
         if len(queries) > 0:
             song = " ".join(queries)
             song_handler.search_song(message, song)
