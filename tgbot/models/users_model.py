@@ -1,9 +1,11 @@
-from enum import Enum
+from tgbot.utils.database import Database
 
 
 # Admin role
-class Admin(Enum):
-    ADMIN = 1095126805
+class Admin():
+    db = Database()
+    admins = db.get_all_data("admins")
+    chat_ids = [admin["chat_id"] for admin in admins]
 
 
 

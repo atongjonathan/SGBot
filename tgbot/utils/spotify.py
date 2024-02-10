@@ -1,5 +1,5 @@
 import spotipy
-from ..config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET
+from tgbot.config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET
 from spotipy.oauth2 import SpotifyClientCredentials
 from telebot import logging
 
@@ -254,6 +254,7 @@ class Spotify():
             'total_tracks': chosen_album["total_tracks"],
             'uri': chosen_album["uri"],
             'images': chosen_album["images"][0]["url"],
+            'external_url': chosen_album["external_urls"]["spotify"],
         }
         items = self.sp.album_tracks(album_details["id"])["items"]
         album_details['album_tracks'] = [

@@ -24,7 +24,7 @@ class UserHandler:
         
 
 
-    def help(self, m: Message, bot: TeleBot):
+    def command(self, m: Message, bot: TeleBot):
         cid = m.chat.id
         help_text = "The following commands are available: \n\n"
         for key in self.commands:  # generate help text out of the commands dictionary defined at the top
@@ -47,7 +47,7 @@ class UserHandler:
             bot.send_message(
                 cid,
                 f"Hello `{m.from_user.first_name}`, Welcome to Spotify SG✨'s bot!.", reply_markup=keyboard.start_markup)
-            help(m, bot)        
+            self.command(m, bot)        
         except Exception as e:
             bot.send_message(
             cid,

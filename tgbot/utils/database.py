@@ -1,66 +1,32 @@
-import sqlite3
 import json
+from pymongo import MongoClient
 from telebot import logging
+from tgbot.config import DATABASE
+from pymongo.errors import DuplicateKeyError
+
 class Database:
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
-    def create_table(self):
-        conn = sqlite3.connect('channel_music.db')
-        cursor = conn.cursor() 
-
-        # Create a table with a column to store JSON documents
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS json_data (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                data JSON
-            )
-        ''')
-
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                data JSON UNIQUE
-            )
-        ''')    
-
-        # Commit the changes and close the connection
-        conn.commit()
-        conn.close()
-
+        self.client = MongoClient(DATABASE)  # Connect to your MongoDB instance
+        self.db = self.client['sgbot']  # Replace 'your_database_name' with your actual database name
 
     def insert_user(self, user):
-        conn = sqlite3.connect('channel_music.db')
-        cursor = conn.cursor()       
-        cursor.execute('INSERT INTO users (data) VALUES (?)', (json.dumps(user),))
-        self.logger(f"{user['first_name']} added to Database")
-        conn.commit()
-        conn.close()
-
+        users_collection = self.db['users']
+        existing_user = users_collection.find_one({'chat_id': user['chat_id']})
+        if existing_user:
+                raise DuplicateKeyError(f"User with id {user['id']} already exists")
+        else:
+            users_collection.insert_one(user)
+            self.logger.info(f"{user['first_name']} added to Database")
 
     def insert_json_data(self, json_data):
-        conn = sqlite3.connect('channel_music.db')
-        cursor = conn.cursor()    
-
-        # Insert the JSON data into the table
-        cursor.execute('INSERT INTO json_data (data) VALUES (?)', (json.dumps(json_data),))
+        json_data_collection = self.db['songs']
+        json_data_collection.insert_one(json_data)
         self.logger.info(f"{json_data['title']} added to Database")
 
-        # Commit the changes and close the connection
-        conn.commit()
-        conn.close()
-
-
-    def get_all_data(self, table:str)-> list:
-        conn = sqlite3.connect('channel_music.db')
-        cursor = conn.cursor()    
-        # Retrieve all rows from the table
-        cursor.execute(f'SELECT data FROM {table}')
-        rows = cursor.fetchall()
-
-        # Convert the JSON data back to Python objects
-        result = [json.loads(row[0]) for row in rows]
-
-        # Close the connection
-        conn.close()
+    def get_all_data(self, collection_name: str) -> list:
+        data_collection = self.db[collection_name]
+        cursor = data_collection.find()
+        result = [item for item in cursor]
         return result
 

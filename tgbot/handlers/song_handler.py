@@ -101,7 +101,7 @@ class SongHandler:
                                 reply_markup=keyboard)
         update = self.bot.send_message(
             chat_id, f"...⚡Downloading track no {track_details['track_no']} - `{title}`⚡ ...")
-        retrieved_data = self.database.get_all_data("json_data")
+        retrieved_data = self.database.get_all_data("songs")
         message_id = [message["message_id"] for message in retrieved_data if performer ==
                       message["performer"] and title == message["title"]]
         markup = self.keyboard.lyrics_handler(track_details['name'],
@@ -132,10 +132,11 @@ class SongHandler:
             self.send_chosen_track(track_details, chat_id)
         else:
             caption = f'👤Artist: `{", ".join(album_details["artists"])}`\n📀 Album: `{album_details["name"]}`\n⭐️ Released: `{album_details["release_date"]}`\n🔢 Total Tracks: {album_details["total_tracks"]}'
+            keyboard = self.keyboard.link_handler(album_details["external_url"])
             self.bot.send_photo(chat_id,
                                 album_details["images"],
                                 caption=caption,
-                                reply_markup=self.keyboard.start_markup)
+                                reply_markup=keyboard)
             album_tracks = album_details['album_tracks']
             for track in album_tracks:
                 id = track["uri"]
