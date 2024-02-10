@@ -167,7 +167,6 @@ class SongHandler:
                     DB_CHANNEL, chat_id, song.message_id)
                 data = copied_msg.json['audio']
                 data["message_id"] = copied_msg.message_id
-                self.database.create_table()
                 self.database.insert_json_data(data)
                 self.logger.info("Sent successfully and added to db")
 
