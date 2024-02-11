@@ -1,6 +1,6 @@
 from telebot import TeleBot, util, logging
 from ..utils import spotify, keyboard
-from tgbot.utils.lyrics import musicxmatch_lyrics
+from tgbot.utils.lyrics import Lyrics
 from tgbot.handlers.artist_handler import ArtistHandler 
 from tgbot.handlers.song_handler import SongHandler
 import billboard
@@ -13,6 +13,7 @@ class CallbackHandler:
         self.bot = bot
         self.artist_handler = ArtistHandler(bot)
         self.song_handler = SongHandler(bot)
+        self.lyrics = Lyrics()
         self.logger = logging.getLogger(__name__)
 
     def process_callback_query(self, call, bot: TeleBot):
@@ -101,16 +102,17 @@ class CallbackHandler:
         artist = ', '.join(track_details['artists'])
         title = track_details["name"]
         try:
-            lyrics = musicxmatch_lyrics(artist, title)
+            song_lyrics = self.lyrics.get_lyrics(artist,title)
         except Exception as e:
             self.logger.error(e)
-            lyrics = None
-        if lyrics is None or lyrics == "":
+            song_lyrics = None
+        if song_lyrics is None or song_lyrics == "":
             self.bot.answer_callback_query(
                 call.id, text=f"'{title}' lyrics not found!", show_alert=True)
         else:
             self.bot.answer_callback_query(call.id)
-            caption = f"👤Artist: `{', '.join(track_details['artists'])}`\n🎵Song : `{track_details['name']}`\n━━━━━━━━━━━━\n📀Album : `{track_details['album']}`\n🔢Track : {track_details['track_no']} of {track_details['total_tracks']}\n⭐️ Released: `{track_details['release_date']}`\n\n🎶Lyrics📝:\n\n`{lyrics}`"
+            self.bot.send_chat_action(call.message.chat.id, "typing")
+            caption = f"👤Artist: `{', '.join(track_details['artists'])}`\n🎵Song : `{track_details['name']}`\n━━━━━━━━━━━━\n📀Album : `{track_details['album']}`\n🔢Track : {track_details['track_no']} of {track_details['total_tracks']}\n⭐️ Released: `{track_details['release_date']}`\n\n🎶Lyrics📝:\n\n`{song_lyrics}`"
             try:
                 self.bot.reply_to(call.message,
                                     text=caption,
@@ -121,7 +123,7 @@ class CallbackHandler:
                 for text in splitted_text:
                     try:
                         self.bot.reply_to(call.message,
-                                            text=caption,
+                                            text=text,
                                             reply_markup=keyboard.start_markup)
                     except Exception as e:
                         self.bot.answer_callback_query(call.id, e)
