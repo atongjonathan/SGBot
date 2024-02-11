@@ -11,6 +11,7 @@ from io import BytesIO
 import requests
 from tgbot.handlers.vars import Vars
 import string
+from tqdm import tqdm
 
 class SongHandler:
     def __init__(self, bot: TeleBot) -> None:
@@ -126,6 +127,7 @@ class SongHandler:
             try:
                 is_download_successfull = download(track_link=track_url, cwd=str(chat_id))
             except Exception as e:
+                is_download_successfull = False
                 self.logger.error(f"Error during download {e}")
             self.bot.delete_message(chat_id, update.message_id)
             if is_download_successfull:
