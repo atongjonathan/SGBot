@@ -1,37 +1,40 @@
 import subprocess
 from telebot import logging
+import os
 
 logger = logging.getLogger(__name__)
 
-
-def download(track_link):
+def download(track_link, cwd):
     try:
         # download track
-        normal_download_command = ['spotdl', "--bitrate", "128k",
-                                   track_link]  # nomal download
-        command = normal_download_command  # normal download
+        normal_download_command = ['spotdl', "--bitrate", "128k", track_link]
+        command = normal_download_command
+
+        os.makedirs(cwd, exist_ok=True)
         logger.info("Download Started ...")
-        result = subprocess.run(command,
-                                cwd="output",
-                                check=True,
-                                text=True,
-                                capture_output=True)
+        result = subprocess.run(command, cwd=cwd, check=True, text=True, capture_output=True)
+        
+        # Print the output of the command
         logger.info(result.stdout)
+
         logger.info("Finished download...")
-        return True
 
     except subprocess.CalledProcessError as e:
         logger.error(f"Error executing process {e}")
         logger.error(f"Outputs {e.output}")
+
+        # Retry with downloading ffmpeg if necessary
         ffmpeg_command = ['spotdl', "--download-ffmpeg"]
         subprocess.run(ffmpeg_command)
+
         try:
-            normal_download_command = ['spotdl', "--bitrate", "128k",
-                                       track_link]  # nomal download
-            command = normal_download_command  # normal download
-            subprocess.run(command, cwd="output")
-            return True
-        except:
+            # Retry the normal download
+            normal_download_command = ['spotdl', "--bitrate", "128k", track_link]
+            command = normal_download_command
+            subprocess.run(command, cwd=cwd, check=True, text=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
             logger.error(f"Error executing process {e}")
             logger.error(f"Outputs {e.output}")
-        return False
+            return False
+
+    return True

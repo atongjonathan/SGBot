@@ -75,7 +75,6 @@ class Keyboard():
                 list_of_type = value
                 one_type = key  # Key is the type for future generations
         except Exception as e:  # Found to be of top tracks
-            self.logger.info(f"Exception {e}. Handling it for toptracks case")
             one_type = "toptracks"  # Key is set to be toptracks
             pass
         pages_list = self._make_sub_lists(list_of_type, 5)

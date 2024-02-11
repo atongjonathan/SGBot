@@ -6,10 +6,11 @@ from telebot import TeleBot, logging
 import time
 from tgbot.config import DB_CHANNEL
 from tgbot.utils.functions import download
-import os
+import os, shutil
 from io import BytesIO
 import requests
 from tgbot.handlers.vars import Vars
+import string
 
 class SongHandler:
     def __init__(self, bot: TeleBot) -> None:
@@ -88,9 +89,10 @@ class SongHandler:
         track_url = track_details['external_url']
         title = track_details["name"]
         performer = ", ".join(track_details['artists'])
-        artists = [artist.replace(" ", '')
+        artists_strippped = [artist.replace(" ", '')
                    for artist in track_details['artists']]
-        hashtag = f'#{"".join(artists)}'
+        artists = [artist.translate(str.maketrans("","", string.punctuation)) for artist in artists_strippped]
+        hashtag = f'{" ".join([f"#{artist}" for artist in artists])}'
         preview_url = track_details['preview_url']
         if send_photo:
             time.sleep(1)
@@ -109,6 +111,7 @@ class SongHandler:
         if Vars.isPreview:
             self.send_preview(chat_id, title, performer,
                               markup, preview_url, hashtag)
+            self.bot.delete_message(chat_id, update.message_id)
 
         elif len(message_id) > 0:
             copied = self.bot.copy_message(
@@ -118,11 +121,20 @@ class SongHandler:
                     chat_id, copied.message_id, reply_markup=markup)
             except BaseException:
                 pass
-
+            self.bot.delete_message(chat_id, update.message_id)
         else:
-            if (download(track_link=track_url)):
-                self.send_download(chat_id, title, performer, markup, hashtag)
-        self.bot.delete_message(chat_id, update.message_id)
+            try:
+                is_download_successfull = download(track_link=track_url, cwd=str(chat_id))
+            except Exception as e:
+                self.logger.error(f"Error during download {e}")
+            self.bot.delete_message(chat_id, update.message_id)
+            if is_download_successfull:
+                try:
+                    self.send_download(chat_id, title, performer, markup, hashtag, cwd=str(chat_id))
+                except Exception as e:
+                    self.logger.error(f"Error during sending {e}")
+                    self.send_download(chat_id, title, performer, markup, hashtag, cwd=str(chat_id))
+
 
 
     def get_album_songs(self, uri, chat_id):
@@ -151,10 +163,10 @@ class SongHandler:
 
 
 
-    def send_download(self, chat_id, title, performer, reply_markup, hashtag):
-        for f in os.listdir('output'):
-            file_path = os.path.join("output", f)
-            if file_path.endswith(".mp3"):
+    def send_download(self, chat_id, title, performer, reply_markup, hashtag, cwd):
+        for f in os.listdir(cwd):
+            file_path = os.path.join(cwd, f)
+            if title in file_path:
                 with open(file_path, "rb") as file:
                     self.logger.info(f"Sending {f}", )
                     self.bot.send_chat_action(chat_id, "upload_audio")
@@ -162,13 +174,13 @@ class SongHandler:
                                                performer=performer,
                                                reply_markup=reply_markup,
                                                caption=hashtag)
-                os.remove(file_path)
                 copied_msg = self.bot.forward_message(
                     DB_CHANNEL, chat_id, song.message_id)
                 data = copied_msg.json['audio']
                 data["message_id"] = copied_msg.message_id
                 self.database.insert_json_data(data)
                 self.logger.info("Sent successfully and added to db")
+        shutil.rmtree(cwd)
 
     def send_preview(self, chat_id, title, performer,
                      reply_markup, preview_url, hashtag):

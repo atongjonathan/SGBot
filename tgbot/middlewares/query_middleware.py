@@ -16,9 +16,11 @@ class QueryMiddleware(BaseMiddleware):
         try:
             splitted_message = message.text.split(" ")
             queries = [query for query in splitted_message[1:]]
-            message.queries = queries
         except Exception:
-            loggger.info(message.message_id)
+            queries = []
+            pass
+        message.queries = queries
+            
 
 
     def post_process(self, message, data, exception):
