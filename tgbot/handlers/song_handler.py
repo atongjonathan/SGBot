@@ -11,7 +11,6 @@ from io import BytesIO
 import requests
 from tgbot.handlers.vars import Vars
 import string
-from tqdm import tqdm
 
 class SongHandler:
     def __init__(self, bot: TeleBot) -> None:

@@ -33,7 +33,4 @@ class Lyrics():
     def get_lyrics(self, artist, title):
         if self.genius_lyrics is None:
             return self.musicxmatch_lyrics(artist, title)
-        else:
-            return self.genius_lyrics(artist, title)
-
 
