@@ -133,23 +133,23 @@ class UserHandler:
                     bot.reply_to(
                         message, "Invalid format")
                     return
+            elif len(queries) == 2:
+                if queries[1]=="snippet":
+                    Vars.isPreview = True 
             else:
                 try:
                     no_of_songs = int(queries[0])
                 except:
                     bot.reply_to(
                         message, "Invalid format")
-                    return
-                            
-            if no_of_songs > limit:
-                bot.reply_to(
-                    message, "Default user request should be less than 20")
-                return
-            if len(queries) == 2:
-                if queries[1]=="snippet":
-                    Vars.isPreview = True
-            songs_range = [start, no_of_songs]
-            self.search_trending(message, bot=bot, songs_range=songs_range)
+                    return                
+        if no_of_songs > limit:
+            bot.reply_to(
+                message, "Default user request should be less than 20")
+            return
+
+        songs_range = [start, no_of_songs]
+        self.search_trending(message, bot=bot, songs_range=songs_range)
 
 
     def regex(self, message: Message, bot: TeleBot):
@@ -198,4 +198,5 @@ class UserHandler:
 
 
     def trending(self, message: Message, bot: TeleBot):
+        print(message.queries)
         self.admin_trending(message, bot, 20)           

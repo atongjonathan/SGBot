@@ -132,6 +132,7 @@ class CallbackHandler:
 
     def handle_all_callback(self, call):
         no_of_songs = call.data.split("_")[1]
+        self.bot.delete_message(call.message.chat.id, call.message.id)
         sending = self.bot.send_message(call.message.chat.id, "Sending them all ...")
         try:
             hot_100 = Vars.top_100[:int(no_of_songs)]
@@ -140,7 +141,6 @@ class CallbackHandler:
             hot_100 = billboard.ChartData("hot-100")[:int(no_of_songs)]
         track_data = [spotify.song(artist=item.artist, title=item.title)[
             0] for item in hot_100]
-        self.bot.delete_message(call.message.chat.id, call.message.id)
         self.bot.delete_message(sending.chat.id, sending.id)
         for song in track_data:
             track_details = spotify.get_chosen_song(song["uri"])
