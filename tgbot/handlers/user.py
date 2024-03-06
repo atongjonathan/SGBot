@@ -21,6 +21,7 @@ class UserHandler:
         }
 
         self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialising users ...")
         
 
 

@@ -1,14 +1,14 @@
 from telebot import TeleBot, logging
 from telebot import BaseMiddleware
 
-loggger = logging.getLogger(__name__)
-
 
 class QueryMiddleware(BaseMiddleware):
     def __init__(self, bot: TeleBot) -> None:
         self.last_time = {}
         self.update_types = ['message']
         self.bot = bot
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialising QueryMiddleware ...")
         # Always specify update types, otherwise middlewares won't work
 
 

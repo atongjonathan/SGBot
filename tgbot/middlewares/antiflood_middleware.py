@@ -1,5 +1,4 @@
-from telebot import BaseMiddleware
-from telebot import CancelUpdate
+from telebot import BaseMiddleware, CancelUpdate, logging
 
 class AntiFloodMiddleware(BaseMiddleware):
     def __init__(self, limit, bot) -> None:
@@ -7,6 +6,8 @@ class AntiFloodMiddleware(BaseMiddleware):
         self.limit = limit
         self.update_types = ['message']
         self.bot = bot
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialising AntiFloodMiddleware ...")
         # Always specify update types, otherwise middlewares won't work
 
 
