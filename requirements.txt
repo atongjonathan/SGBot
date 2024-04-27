@@ -62,3 +62,4 @@ ytmusicapi==1.5.1
 zipp==3.17.0
 billboard.py==7.0.0
 python-dotenv==1.0.1
+pymongo
