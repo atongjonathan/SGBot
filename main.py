@@ -15,6 +15,7 @@ from tgbot.middlewares.query_middleware import QueryMiddleware
 
 # config
 from tgbot.config import TOKEN
+from keep_alive import keep_alive
 
 
 bot = TeleBot(TOKEN, parse_mode="markdown", use_class_middlewares=True)
@@ -80,3 +81,4 @@ def start_bot():
 
 if __name__ == "__main__":
     start_bot()
+    keep_alive()
