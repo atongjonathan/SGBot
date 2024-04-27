@@ -15,6 +15,7 @@ class CallbackHandler:
         self.song_handler = SongHandler(bot)
         self.lyrics = Lyrics()
         self.logger = logging.getLogger(__name__)
+        self.make = ""
 
     def process_callback_query(self, call, bot: TeleBot):
         data = call.data
@@ -91,10 +92,10 @@ class CallbackHandler:
             artist_list = artist_details[f"artist_{of_type}s"]
         if handle == 'n':
             page = int(page) + 1
-            self.send_checker(artist_list, call.message.chat.id, page)
+            self.send_checker(artist_list, call.message.chat.id, page, call.message.message_id)
         elif handle == 'p':
             page = int(page) - 1
-            self.send_checker(artist_list, call.message.chat.id, page)
+            self.send_checker(artist_list, call.message.chat.id, page, call.message.message_id)
 
     def handle_lyrics_callback(self, call):
         uri = call.data.split("_")[1]
@@ -178,7 +179,7 @@ class CallbackHandler:
 
 
     def send_checker(self, list_of_type: list,
-                     chat_id: str, current_page: int):
+                     chat_id: str, current_page: int, message_id=None):
         """
         Requests user to specify the song to get with appropriate reply markup
         """
@@ -189,9 +190,10 @@ class CallbackHandler:
             reply_markup = keyboard.make_for_trending(list_of_type)
         try:
             self.bot.edit_message_reply_markup(
-                chat_id, self.make_id, reply_markup=reply_markup)
+                chat_id=chat_id, message_id=message_id, reply_markup=reply_markup)
+            
         except Exception as e:
-            make = self.bot.send_message(chat_id,
+            self.bot.send_message(chat_id,
                                          "Awesome which ones tracks do you want to get?",
                                          reply_markup=reply_markup)
-            self.make_id = make.id
+                                         
