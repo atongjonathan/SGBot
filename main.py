@@ -74,6 +74,7 @@ def start_bot():
     bot.add_custom_filter(AdminFilter())
     register_handlers(user)
     logger.info("____Bot is running___")
+    keep_alive()
     bot.polling()
 
 # Middlewares
@@ -81,4 +82,4 @@ def start_bot():
 
 if __name__ == "__main__":
     start_bot()
-    keep_alive()
+    
