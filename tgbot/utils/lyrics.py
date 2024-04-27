@@ -1,6 +1,6 @@
 from tgbot.config import MUSICXMATCH_API_KEY
 from logging import getLogger
-from spotdl.providers.lyrics import MusixMatch, Genius, Synced
+from spotdl.providers.lyrics import MusixMatch, Genius
 import requests
 
 
@@ -8,7 +8,7 @@ class Lyrics():
 
     def __init__(self) -> None:
         self.musixmatch = MusixMatch()
-        self.genius = Synced()
+        self.genius = Genius()
         self.logger = getLogger(__name__)
 
     def musicxmatch_lyrics(self, artist, title):
@@ -31,9 +31,6 @@ class Lyrics():
         return lyrics
 
     def get_lyrics(self, artist, title):
-      genius_l = self.genius_lyrics(artist, title)
-      if genius_l is None:
+        if self.genius_lyrics is None:
             return self.musicxmatch_lyrics(artist, title)
-      else:
-        return genius_l
 
