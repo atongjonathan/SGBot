@@ -151,10 +151,11 @@ class SongHandler:
                                 caption=caption,
                                 reply_markup=keyboard)
             album_tracks = album_details['album_tracks']
-            for track in album_tracks:
+            for idx,track in enumerate(album_tracks):
                 id = track["uri"]
                 track_details = self.spotify.get_chosen_song(id)
                 caption = f'👤Artist: `{track_details["artists"]}`\n🔢Track : {track_details["track_no"]} of {album_details["total_tracks"]}\n🎵Song : `{track_details["name"]}`\n'
+                track_details["track_no"] = idx
                 self.send_audios_or_previews(
                     track_details, chat_id, False, caption=caption)
             self.bot.send_message(
