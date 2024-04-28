@@ -199,5 +199,8 @@ class UserHandler:
 
 
     def trending(self, message: Message, bot: TeleBot):
-        print(message.queries)
-        self.admin_trending(message, bot, 20)           
+        if message.chat.id not in Vars.admins:
+            print(Vars.admins)
+            self.admin_trending(message, bot, 20)
+        else:
+            self.admin_trending(message, bot, 100)           
