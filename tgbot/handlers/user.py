@@ -154,6 +154,7 @@ class UserHandler:
 
 
     def regex(self, message: Message, bot: TeleBot):
+        Vars.isPreview = False
         link = message.text
         mini_link = link.split("spotify.com/")[1].split("?")[0]
         link_type = mini_link.split("/")[0]
