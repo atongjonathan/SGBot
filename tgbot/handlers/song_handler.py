@@ -11,6 +11,7 @@ from io import BytesIO
 import requests
 from tgbot.handlers.vars import Vars
 import string
+from tgbot.utils.lyrics import Lyrics
 
 class SongHandler:
     def __init__(self, bot: TeleBot) -> None:
@@ -166,9 +167,12 @@ class SongHandler:
 
 
     def send_download(self, chat_id, title, performer, reply_markup, hashtag, cwd):
+        lyrics = Lyrics()
+        song_lyrics = lyrics.get_lyrics(performer, title)   
         for f in os.listdir(cwd):
             file_path = os.path.join(cwd, f)
             if title in file_path:
+                lyrics.embedd_lyrics(file_path, song_lyrics)
                 with open(file_path, "rb") as file:
                     self.logger.info(f"Sending {f}", )
                     self.bot.send_chat_action(chat_id, "upload_audio")

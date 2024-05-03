@@ -2,6 +2,8 @@ from tgbot.config import MUSICXMATCH_API_KEY
 from logging import getLogger
 from spotdl.providers.lyrics import MusixMatch, Genius, Synced
 import requests
+import os
+from mutagen.id3 import ID3, USLT
 
 
 class Lyrics():
@@ -31,8 +33,20 @@ class Lyrics():
         return lyrics
 
     def get_lyrics(self, artist, title):
-      genius_l = self.genius_lyrics(artist, title)
-      if genius_l is None:
+        genius_l = self.genius_lyrics(artist, title)
+        if genius_l is None:
             return self.musicxmatch_lyrics(artist, title)
-      else:
-        return genius_l
+        else:
+            return genius_l
+
+    def embedd_lyrics(self, mp3_file, lyrics):
+        # Load the MP3 file using mutagen
+        if lyrics != None or lyrics == "":
+            self.logger.info("Embedding lyrics ...")
+            audio = ID3(mp3_file)
+            # Add the USLT frame
+            audio.add(USLT(encoding=3, text=lyrics))
+            # Save the updated tag data
+            audio.save()
+        else:
+            self.logger.info("Lyrics was not found...")
