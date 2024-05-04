@@ -130,7 +130,7 @@ def song(message: telebot.types.Message, isPreview=False):
     Vars.isPreview = isPreview
     song_reply = 'Send me the song title followed by the artist separated by a "-" for optimal results'
     queries = message.queries
-    song_handler = SongHandler(bot)
+    song_handler = SongHandler(bot)                                                                                                                                                                                                                                                                                                                             
     if len(queries) > 0:
         song = " ".join(queries)
         song_handler.search_song(message, song)
@@ -144,13 +144,13 @@ def song(message: telebot.types.Message, isPreview=False):
 @bot.message_handler(commands=["snippet"])
 def snippet(message: telebot.types.Message):
     Vars.isPreview = True
-    song(message, bot, True)
+    song(message, True)
 
 
-@bot.message_handler(commands=["snipets"])
+@bot.message_handler(commands=["snippets"])
 def snippets(message: telebot.types.Message):
     Vars.isPreview = True
-    artist(message, bot, True)
+    artist(message, True)
 
 
 @bot.message_handler(commands=["trending"], is_chat_admin=True)
