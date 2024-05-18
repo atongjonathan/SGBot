@@ -95,6 +95,10 @@ def logs(message: telebot.types.Message):
     with open("logs.txt", "rb") as file:
         bot.send_document(message.chat.id, file,
                           reply_markup=keyboard.start_markup)
+    file = open("logs.txt", "w")
+    file.write("")
+    file.close()
+    logger.info("__New logs__")
 
 
 @bot.message_handler(commands=["ping"])
