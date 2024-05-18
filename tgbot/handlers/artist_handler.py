@@ -7,7 +7,7 @@ class ArtistHandler:
     def __init__(self, bot: TeleBot) -> None:
         self.bot = bot
 
-    def search_artist(self, message: Message, artist: str) -> None:
+    def search_artist(self, message: Message) -> None:
         """
         Search for the artist from the string provided.
 
@@ -18,6 +18,10 @@ class ArtistHandler:
         Returns:
             None
         """
+        artist = message.text
+        if artist == "/artist":
+            self.bot.reply_to(message, "Command cannot be used as a query. Try again: /artist")
+            return
         artist_results = spotify.artist(artist)
         if len(artist_results) == 0:  # Handles when no artist is found
             self.bot.send_message(
