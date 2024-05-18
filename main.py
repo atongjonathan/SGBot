@@ -186,6 +186,8 @@ def admin_trending(message: telebot.types.Message, limit=100):
 
         songs_range = [start, no_of_songs]
         search_trending(message, songs_range=songs_range)
+    else:
+         search_trending(message, songs_range=[start, 10])
 
 
 @bot.message_handler(regexp=link_regex)
