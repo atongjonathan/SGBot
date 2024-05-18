@@ -23,7 +23,7 @@ class SongHandler:
 
 
         
-    def check_input(self, text: str):
+    def check_input(self, message: Message):
         """
         Extracts the artist and song from the string provided.
 
@@ -34,6 +34,10 @@ class SongHandler:
             Artist: str
             Title : str       
         """
+        text = message.text
+        if text == "/song":
+            self.bot.reply_to(message, "Command cannot be used as a query. Try again: /song")
+            return
         if "-" not in text:
             text + "-"
         data_list = text.split("-")
@@ -45,7 +49,7 @@ class SongHandler:
         return artist, title
 
 
-    def search_song(self, message: Message, text: str):
+    def search_song(self, message: Message):
         """
         Search for the song from the string provided.
 
@@ -56,7 +60,10 @@ class SongHandler:
         Returns:
             None
         """
-        artist, title = self.check_input(text)
+        try:
+            artist, title = self.check_input(message)
+        except Exception:
+            return
         possible_tracks = self.spotify.song(artist, title)
         no_of_results = len(possible_tracks)
         if no_of_results == 0:

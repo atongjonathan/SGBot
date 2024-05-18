@@ -133,12 +133,14 @@ def song(message: telebot.types.Message, isPreview=False):
     song_handler = SongHandler(bot)
     if len(queries) > 0:
         song = " ".join(queries)
-        song_handler.search_song(message, song)
+        new_msg = message
+        new_msg.text = song
+        song_handler.search_song(new_msg)
     else:
         bot.reply_to(message, song_reply,
                      reply_markup=keyboard.force_markup)
         bot.register_next_step_handler_by_chat_id(message.chat.id,
-                                                  lambda msg: song_handler.search_song(msg, msg.text))
+                                                  lambda msg: song_handler.search_song(msg))
 
 
 @bot.message_handler(commands=["snippet"])
@@ -264,4 +266,4 @@ if __name__ == "__main__":
     ascii = "\n  _________ ________  __________        __   \n /   _____//  _____/  \______   \ _____/  |_ \n \_____  \/   \  ___   |    |  _//  _ \   __\\ \n /        \    \_\  \  |    |   (  <_> )  |  \n/_______  /\______  /  |______  /\____/|__|  \n        \/        \/          \/             \n"
     logger.info(ascii)
     keep_alive()
-    bot.polling()
+    bot.infinity_polling()
