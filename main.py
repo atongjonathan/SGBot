@@ -16,7 +16,7 @@ import telebot
 import billboard
 from keep_alive import keep_alive
 
-
+import os
 bot = telebot.TeleBot(TOKEN, parse_mode="markdown", use_class_middlewares=True)
 
 logging = telebot.logging
@@ -130,7 +130,7 @@ def song(message: telebot.types.Message, isPreview=False):
     Vars.isPreview = isPreview
     song_reply = 'Send me the song title followed by the artist separated by a "-" for optimal results'
     queries = message.queries
-    song_handler = SongHandler(bot)                                                                                                                                                                                                                                                                                                                             
+    song_handler = SongHandler(bot)
     if len(queries) > 0:
         song = " ".join(queries)
         song_handler.search_song(message, song)
@@ -187,7 +187,7 @@ def admin_trending(message: telebot.types.Message, limit=100):
         songs_range = [start, no_of_songs]
         search_trending(message, songs_range=songs_range)
     else:
-         search_trending(message, songs_range=[start, 10])
+        search_trending(message, songs_range=[start, 10])
 
 
 @bot.message_handler(regexp=link_regex)
@@ -251,16 +251,17 @@ def handle_text(message: telebot.types.Message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):
-    handler = CallbackHandler(bot)
     handler.process_callback_query(call, bot)
 
 
-if __name__ == "__main__":
-    bot.setup_middleware(AntiFloodMiddleware(limit=2, bot=bot))
-    bot.setup_middleware(QueryMiddleware(bot=bot))
+handler = CallbackHandler(bot)
+bot.setup_middleware(QueryMiddleware(bot=bot))
+bot.setup_middleware(AntiFloodMiddleware(limit=5, bot=bot))
 
-    # custom filters
-    bot.add_custom_filter(IsAdmin())
-    logger.info("____Bot is running___")
+# custom filters
+bot.add_custom_filter(IsAdmin())
+if __name__ == "__main__":
+    ascii = "\n  _________ ________  __________        __   \n /   _____//  _____/  \______   \ _____/  |_ \n \_____  \/   \  ___   |    |  _//  _ \   __\\ \n /        \    \_\  \  |    |   (  <_> )  |  \n/_______  /\______  /  |______  /\____/|__|  \n        \/        \/          \/             \n"
+    logger.info(ascii)
     keep_alive()
-    bot.infinity_polling()
+    bot.polling()
