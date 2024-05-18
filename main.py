@@ -117,12 +117,14 @@ def artist(message: telebot.types.Message, isPreview=False):
     artist_handler = ArtistHandler(bot)
     if len(queries) > 0:
         artist = " ".join(queries)
-        artist_handler.search_artist(message, artist)
+        new_msg = message
+        new_msg.text = artist
+        artist_handler.search_artist(new_msg)
     else:
         bot.reply_to(message, artist_reply,
                      reply_markup=keyboard.force_markup)
         bot.register_next_step_handler_by_chat_id(message.chat.id,
-                                                  lambda msg: artist_handler.search_artist(msg, msg.text))
+                                                  lambda msg: artist_handler.search_artist(msg))
 
 
 @bot.message_handler(commands=["song"])
