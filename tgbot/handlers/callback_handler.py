@@ -12,18 +12,18 @@ class CallbackHandler:
     def __init__(self, bot: TeleBot) -> None:
         self.bot = bot
         self.artist_handler = ArtistHandler(bot)
-        self.song_handler = SongHandler(bot)
         self.lyrics = Lyrics()
         self.logger = logging.getLogger(__name__)
         self.make = ""
 
     def process_callback_query(self, call, bot: TeleBot):
         data = call.data
+        self.song_handler = SongHandler(bot)
         if data.startswith('album') or data.startswith('single') or data.startswith(
             'compilation') or data.startswith(
                 'toptracks'):  # Handle for list of type of an artist
-            bot.answer_callback_query(call.id)
-            self.handle_list_callback(call)
+            if bot.answer_callback_query(call.id):
+                self.handle_list_callback(call)            
         elif data.startswith("lyrics"):  # Handle for sending lyrics of a song
             self.handle_lyrics_callback(call)
         elif data.startswith("close"):
@@ -65,6 +65,7 @@ class CallbackHandler:
         """
         Calls either the track or artist method to reply to the user with requested info
         """
+        self.song_handler = SongHandler(self.bot)
         self.bot.delete_message(
             call.message.chat.id,
             call.message.id)  # Deletes user manual for possible artists
@@ -135,6 +136,7 @@ class CallbackHandler:
         no_of_songs = call.data.split("_")[1]
         self.bot.delete_message(call.message.chat.id, call.message.id)
         sending = self.bot.send_message(call.message.chat.id, "Sending them all ...")
+        self.song_handler = SongHandler(self.bot)
         try:
             hot_100 = Vars.top_100[:int(no_of_songs)]
         except Exception as e:
