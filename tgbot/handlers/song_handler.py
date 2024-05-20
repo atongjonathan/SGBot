@@ -179,14 +179,15 @@ class SongHandler:
         for f in os.listdir(cwd):
             file_path = os.path.join(cwd, f)
             if title in file_path:
-                lyrics.embedd_lyrics(file_path, song_lyrics)
+                if lyrics.embedd_lyrics(file_path, song_lyrics):
+                    hashtag += "  🎼"
                 with open(file_path, "rb") as file:
                     self.logger.info(f"Sending {f}", )
                     self.bot.send_chat_action(chat_id, "upload_audio")
                     song = self.bot.send_audio(chat_id, file, title=title,
                                                performer=performer,
                                                reply_markup=reply_markup,
-                                               caption=hashtag)
+                                               caption=hashtag, parse_mode="HTML")
                 copied_msg = self.bot.forward_message(
                     DB_CHANNEL, chat_id, song.message_id)
                 data = copied_msg.json['audio']

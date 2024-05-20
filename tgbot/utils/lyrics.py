@@ -48,5 +48,6 @@ class Lyrics():
             audio.add(USLT(encoding=3, text=lyrics))
             # Save the updated tag data
             audio.save()
-        else:
-            self.logger.info("Lyrics was not found...")
+            return True
+        self.logger.info("Lyrics was not found...")
+        return False
