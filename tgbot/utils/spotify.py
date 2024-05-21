@@ -198,7 +198,7 @@ class Spotify():
             return []
         for track in possible_tracks:
             track_details = {
-                'artists': ', '.join([artist["name"] for artist in track["album"]["artists"]]),
+                'artists': ', '.join([artist["name"] for artist in track["artists"]]),
                 'name': track["name"],
                 'uri': track["uri"]
             }
