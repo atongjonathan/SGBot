@@ -10,7 +10,7 @@ class Lyrics():
 
     def __init__(self) -> None:
         self.musixmatch = MusixMatch()
-        self.genius = Synced()
+        self.synced = Synced()
         self.logger = getLogger(__name__)
 
     def musicxmatch_lyrics(self, artist, title):
@@ -29,7 +29,10 @@ class Lyrics():
 
     def genius_lyrics(self, artist, title):
         artists = artist.split(", ")
-        lyrics = self.genius.get_lyrics(name=title, artists=artists)
+        try:
+            lyrics = self.synced.get_lyrics(name=title, artists=artists)
+        except Exception:
+            lyrics = None
         return lyrics
 
     def get_lyrics(self, artist, title):
