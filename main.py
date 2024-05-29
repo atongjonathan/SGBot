@@ -271,5 +271,5 @@ bot.add_custom_filter(IsAdmin())
 if __name__ == "__main__":
     ascii = "\n  _________ ________  __________        __   \n /   _____//  _____/  \______   \ _____/  |_ \n \_____  \/   \  ___   |    |  _//  _ \   __\\ \n /        \    \_\  \  |    |   (  <_> )  |  \n/_______  /\______  /  |______  /\____/|__|  \n        \/        \/          \/             \n"
     logger.info(ascii)
-    keep_alive()
+    # keep_alive()
     bot.infinity_polling()
