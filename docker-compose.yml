@@ -1,0 +1,12 @@
+version: "3.3"
+
+services:
+  app:
+    container_name: sgbot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python3 main.py
+    restart: on-failure
+    ports:
+      - "8000:8000"
