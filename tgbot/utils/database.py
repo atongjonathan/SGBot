@@ -9,11 +9,11 @@ class Database:
         self.logger = logging.getLogger(__name__)
 
     def start_db(self):
-        self.logger.info("Initialising database ...")
+        # self.logger.info("Initialising database ...")
         try:
             client = MongoClient(DATABASE)
             db = client['sgbot']
-            self.logger.info("Database initialised successfully")
+            # self.logger.info("Database initialised successfully")
             return db
         except Exception as e:
             self.logger.error(f"Error occured when connecting to database: {e}")
