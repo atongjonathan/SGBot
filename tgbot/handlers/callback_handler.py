@@ -104,7 +104,7 @@ class CallbackHandler:
         artist = ', '.join(track_details['artists'])
         title = track_details["name"]
         try:
-            song_lyrics = self.lyrics.get_lyrics(artist,title)
+            song_lyrics = self.lyrics.musicxmatch_lyrics(artist,title)
         except Exception as e:
             self.logger.error(e)
             song_lyrics = None
