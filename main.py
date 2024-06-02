@@ -60,6 +60,13 @@ def command(m: telebot.types.Message):
     for key in commands:  # generate help text out of the commands dictionary defined at the top
         help_text += "/" + key + ": "
         help_text += commands[key] + "\n"
+    help_text += """
+Example usage:
+/artist Burna Boy or /artist only and reply with the name
+/song Closer - Halsey  or /song only and reply with the name
+/trending 10 - Get top 10 trending songs on Billboard Top 100
+/snippet Closer - Halsey : Get 30 second preview of the song
+    """
     bot.send_message(cid, help_text)
 
 
@@ -82,7 +89,7 @@ def start(m: telebot.types.Message):
         bot.send_message(
             cid,
             f"Hello `{m.from_user.first_name}`, Welcome to Spotify SG✨'s bot!.", reply_markup=keyboard.start_markup)
-        command(m, bot)
+        command(m)
     except Exception as e:
         bot.send_message(
             cid,
