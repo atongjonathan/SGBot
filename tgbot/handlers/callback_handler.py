@@ -66,9 +66,9 @@ class CallbackHandler:
         Calls either the track or artist method to reply to the user with requested info
         """
         self.song_handler = SongHandler(self.bot)
-        self.bot.delete_message(
-            call.message.chat.id,
-            call.message.id)  # Deletes user manual for possible artists
+        # self.bot.delete_message(
+        #     call.message.chat.id,
+        #     call.message.id)  # Deletes user manual for possible artists
         # Obtains the uri whether artist or track
         uri = call.data.split("_")[1]
         try:
