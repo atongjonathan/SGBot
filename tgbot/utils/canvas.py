@@ -1,7 +1,7 @@
 from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-import logging
+from telebot import logging
 
 logger = logging.getLogger(__name__)
 
