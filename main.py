@@ -162,6 +162,12 @@ def snippet(message: telebot.types.Message):
     song(message, True)
 
 
+@bot.message_handler(commands=["canvas"])
+def canvas(message: telebot.types.Message):
+    Vars.isCanvas = True
+    song(message, True)
+
+
 @bot.message_handler(commands=["snippets"])
 def snippets(message: telebot.types.Message):
     Vars.isPreview = True
