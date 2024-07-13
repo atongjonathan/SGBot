@@ -80,12 +80,23 @@ class SongHandler:
             for idx, item in enumerate(possible_tracks)
         ]
         result_string = '\n'.join(result_string)
+        final_text = f"Found {no_of_results} result(s) from the search `{title}` ~{message.from_user.first_name}\n\n{result_string}"
         artists_keyboard = self.keyboard.keyboard_for_results(
             results=possible_tracks)
-        self.bot.send_message(
-            message.chat.id,
-            f"Found {no_of_results} result(s) from the search `{title}` ~ {message.from_user.first_name}\n\n{result_string}",
-            reply_markup=artists_keyboard)
+        try:
+            self.bot.send_message(
+                message.chat.id,
+                final_text,
+                reply_markup=artists_keyboard)
+        except Exception as e:
+            exeption_string = str(e)
+            problematic_xter = final_text[int(exeption_string.split("byte offset ")[1])]
+            final_text = final_text.replace(str(problematic_xter), f"\{problematic_xter}")
+            self.bot.send_message(
+                message.chat.id,
+                final_text,
+                reply_markup=artists_keyboard)
+
 
     def send_chosen_track(self, track_details, chat_id):
         duration = track_details["duration_ms"]
@@ -108,20 +119,14 @@ class SongHandler:
             self.forward_media(message_id[0], **kwargs)
             self.bot.delete_message(kwargs["chat_id"], update.message_id)
         else:
-            try:
-                is_download_successfull = download(track_link=kwargs["track_url"],
+            is_download_successfull = download(track_link=kwargs["track_url"],
                                                    cwd=str(kwargs["chat_id"]))
-            except Exception as e:
-                is_download_successfull = False
-                logger.error(f"Error during download {e}")
-            self.bot.delete_message(kwargs["chat_id"], update.message_id)
             if is_download_successfull:
                 try:
                     self.send_download(**kwargs)
                 except Exception as e:
                     logger.error(f"Error during sending {e}")
-                    self.send_download(**kwargs)
-                self.bot.delete_message(kwargs['chat_id'], update.message_id)
+            self.bot.delete_message(kwargs['chat_id'], update.message_id)
 
     def forward_media(self, message_id, **kwargs):
         copied = self.bot.copy_message(kwargs["chat_id"], DB_CHANNEL, message_id, reply_markup=kwargs["reply_markup"],
@@ -133,12 +138,14 @@ class SongHandler:
             pass
 
     def send_canvas(self, **kwargs):
+        Vars.isCanvas = False
         update = self.bot.send_message(kwargs['chat_id'],
                                        f"...⚡Downloading canvas of  `{kwargs['title']}`⚡ ...")
         message_id = self.database.search_data(
             'canvas', kwargs["performer"], kwargs["title"])
         if len(message_id) > 0:
             self.forward_media(message_id[0], **kwargs)
+            self.bot.delete_message(kwargs['chat_id'], update.message_id)
         else:
             try:
                 response = requests.get(
@@ -157,6 +164,7 @@ class SongHandler:
                     kwargs["chat_id"],
                     text=f"No Canvas found for `{kwargs['title']}`\n{kwargs['hashtag']}",
                     reply_markup=kwargs["reply_markup"])
+                self.bot.delete_message(kwargs['chat_id'], update.message_id)
                 return
             else:
                 video_response = requests.get(canvasList[0]["canvasUrl"])
@@ -198,8 +206,9 @@ class SongHandler:
                         file.close()
                         self.send_to_db(
                             kwargs["chat_id"], canvas.message_id, 'video', kwargs["performer"], kwargs["title"])
+                        self.bot.delete_message(kwargs['chat_id'], update.message_id)
         shutil.rmtree(str(kwargs['chat_id']), ignore_errors=True)
-        self.bot.delete_message(kwargs['chat_id'], update.message_id)
+
 
     def send_audios_or_previews(self, track_details, chat_id, send_photo,
                                 caption=""):
@@ -280,6 +289,7 @@ class SongHandler:
         title = kwargs["title"]
         performer = kwargs["performer"]
         reply_markup = kwargs["reply_markup"]
+        hashtag = kwargs["hashtag"]
         song_lyrics = lyrics.get_lyrics(kwargs["performer"], title)
         for f in os.listdir(cwd):
             file_path = os.path.join(cwd, f)
@@ -299,6 +309,7 @@ class SongHandler:
         shutil.rmtree(cwd)
 
     def send_preview(self, **kwargs):
+        Vars.isPreview = False
         chat_id = kwargs["chat_id"]
         title = kwargs["title"]
         preview_url = kwargs["preview_url"]

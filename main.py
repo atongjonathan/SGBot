@@ -138,9 +138,7 @@ def artist(message: telebot.types.Message, isPreview=False):
                                                   lambda msg: artist_handler.search_artist(msg))
 
 
-@bot.message_handler(commands=["song"])
-def song(message: telebot.types.Message):
-    song_reply = 'Send me the song title followed by the artist separated by a "-" for optimal results'
+def get_query(message):
     queries = message.queries
     song_handler = SongHandler(bot)
     if len(queries) > 0:
@@ -149,22 +147,28 @@ def song(message: telebot.types.Message):
         new_msg.text = song
         song_handler.search_song(new_msg)
     else:
+        song_reply = 'Send me the song title followed by the artist separated by a "-" for optimal results'
         bot.reply_to(message, song_reply,
                      reply_markup=keyboard.force_markup)
         bot.register_next_step_handler_by_chat_id(message.chat.id,
                                                   lambda msg: song_handler.search_song(msg))
 
 
+@bot.message_handler(commands=["song"])
+def song(message: telebot.types.Message):
+    get_query(message)
+
+
 @bot.message_handler(commands=["snippet"])
 def snippet(message: telebot.types.Message):
     Vars.isPreview = True
-    song(message)
+    get_query(message)
 
 
 @bot.message_handler(commands=["canvas"])
 def canvas(message: telebot.types.Message):
     Vars.isCanvas = True
-    song(message)
+    get_query(message)
 
 
 @bot.message_handler(commands=["snippets"])
@@ -175,7 +179,6 @@ def snippets(message: telebot.types.Message):
 
 @bot.message_handler(commands=["trending"], is_chat_admin=True)
 def admin_trending(message: telebot.types.Message, limit=100):
-    Vars.isPreview = False
     queries = message.queries
     start = 0
     no_of_songs = 10
@@ -212,7 +215,6 @@ def admin_trending(message: telebot.types.Message, limit=100):
 
 @bot.message_handler(regexp=link_regex)
 def regex(message: telebot.types.Message):
-    Vars.isPreview = False
     link = message.text
     mini_link = link.split("spotify.com/")[1].split("?")[0]
     link_type = mini_link.split("/")[0]
