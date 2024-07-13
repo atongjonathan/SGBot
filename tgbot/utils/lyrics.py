@@ -17,13 +17,17 @@ class Lyrics():
         track_params = lyrics_params
         track_params["q_track"] = f"{title}"
         track_params["q_artist"] = f"{artist}"
-        response = requests.get("https://api.musixmatch.com/ws/1.1/track.search",
-                                params=track_params)
-        response.raise_for_status()
-        track_data = response.json()
-        long_link = track_data["message"]["body"]["track_list"][0]["track"]["track_share_url"]
-        link = long_link.split("?")[0]
-        song_lyrics = self.musixmatch.extract_lyrics(link)
+        try:
+            response = requests.get("https://api.musixmatch.com/ws/1.1/track.search",
+                                    params=track_params)
+            response.raise_for_status()
+            track_data = response.json()
+            long_link = track_data["message"]["body"]["track_list"][0]["track"]["track_share_url"]
+            link = long_link.split("?")[0]
+            song_lyrics = self.musixmatch.extract_lyrics(link)
+        except Exception as e:
+            self.logger.error(e)
+            song_lyrics = None        
         return song_lyrics
 
     def synced_lyrics(self, artist, title):
@@ -34,12 +38,11 @@ class Lyrics():
             lyrics = None
         return lyrics
 
-    def get_lyrics(self, artist, title):
-        genius_l = self.synced_lyrics(artist, title)
+    def get_lyrics(self, artist, title):        
+        genius_l = self.synced_lyrics(artist, title)        
         if genius_l is None:
             return self.musicxmatch_lyrics(artist, title)
-        else:
-            return genius_l
+        return genius_l
 
     def embedd_lyrics(self, mp3_file, lyrics):
         # Load the MP3 file using mutagen
