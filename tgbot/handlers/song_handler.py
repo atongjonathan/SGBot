@@ -3,26 +3,29 @@ from tgbot.utils.keyboard import Keyboard
 from tgbot.utils.spotify import Spotify
 from tgbot.utils.database import Database
 from telebot import TeleBot, logging
-import time
-from tgbot.config import DB_CHANNEL
-from tgbot.utils.functions import download
-import os, shutil
-from io import BytesIO
-import requests
-from tgbot.handlers.vars import Vars
-import string
 from tgbot.utils.lyrics import Lyrics
+from tgbot.handlers.vars import Vars
+from tgbot.utils.canvas import combine_video_audio
+from tgbot.utils.functions import download
+from tgbot.config import DB_CHANNEL
+from io import BytesIO
+import os
+import shutil
+import requests
+import string
+import time
+
+logger = logging.getLogger(__name__)
+
 
 class SongHandler:
+
     def __init__(self, bot: TeleBot) -> None:
         self.bot = bot
         self.keyboard = Keyboard()
         self.spotify = Spotify()
         self.database = Database()
-        self.logger = logging.getLogger(__name__)
 
-
-        
     def check_input(self, message: Message):
         """
         Extracts the artist and song from the string provided.
@@ -36,7 +39,8 @@ class SongHandler:
         """
         text = message.text
         if text == "/song":
-            self.bot.reply_to(message, "Command cannot be used as a query. Try again: /song")
+            self.bot.reply_to(
+                message, "Command cannot be used as a query. Try again: /song")
             return
         if "-" not in text:
             text + "-"
@@ -47,7 +51,6 @@ class SongHandler:
         except BaseException:
             artist = ""
         return artist, title
-
 
     def search_song(self, message: Message):
         """
@@ -84,67 +87,157 @@ class SongHandler:
             f"Found {no_of_results} result(s) from the search `{title}` ~ {message.from_user.first_name}\n\n{result_string}",
             reply_markup=artists_keyboard)
 
-
     def send_chosen_track(self, track_details, chat_id):
         duration = track_details["duration_ms"]
         minutes = duration // 60000
         seconds = int((duration % 60000) / 1000)
         caption = f'👤Artist: `{", ".join(track_details["artists"])}`\n🎵Song : `{track_details["name"]}`\n━━━━━━━━━━━━\n📀Album : `{track_details["album"]}`\n🔢Track : {track_details["track_no"]} of {track_details["total_tracks"]}\n⭐️ Released: `{track_details["release_date"]}`\n⌚Duration: `{minutes}:{seconds}`\n🔞Is Explicit: {track_details["explicit"]}\n'
-        self.send_audios_or_previews(track_details, chat_id, True, caption=caption)
+        self.send_audios_or_previews(track_details,
+                                     chat_id,
+                                     True,
+                                     caption=caption)
 
-    def send_audios_or_previews(
-            self, track_details, chat_id, send_photo, caption=""):
+    def send_song(self, **kwargs):
+        update = self.bot.send_message(
+            kwargs["chat_id"],
+            f"...⚡Downloading track no. {kwargs['track_details']['track_no']} - `{kwargs['title']}`⚡ ..."
+        )
+        message_id = self.database.search_data(
+            'songs', kwargs["performer"], kwargs["title"])
+        if len(message_id) > 0:
+            self.forward_media(message_id[0], **kwargs)
+            self.bot.delete_message(kwargs["chat_id"], update.message_id)
+        else:
+            try:
+                is_download_successfull = download(track_link=kwargs["track_url"],
+                                                   cwd=str(kwargs["chat_id"]))
+            except Exception as e:
+                is_download_successfull = False
+                logger.error(f"Error during download {e}")
+            self.bot.delete_message(kwargs["chat_id"], update.message_id)
+            if is_download_successfull:
+                try:
+                    self.send_download(**kwargs)
+                except Exception as e:
+                    logger.error(f"Error during sending {e}")
+                    self.send_download(**kwargs)
+                self.bot.delete_message(kwargs['chat_id'], update.message_id)
+
+    def forward_media(self, message_id, **kwargs):
+        copied = self.bot.copy_message(kwargs["chat_id"], DB_CHANNEL, message_id, reply_markup=kwargs["reply_markup"],
+                                       caption=kwargs["hashtag"])
+        try:
+            self.bot.edit_message_reply_markup(kwargs["chat_id"], copied.message_id,
+                                               reply_markup=kwargs["reply_markup"])
+        except BaseException:
+            pass
+
+    def send_canvas(self, **kwargs):
+        update = self.bot.send_message(kwargs['chat_id'],
+                                       f"...⚡Downloading canvas of  `{kwargs['title']}`⚡ ...")
+        message_id = self.database.search_data(
+            'canvas', kwargs["performer"], kwargs["title"])
+        if len(message_id) > 0:
+            self.forward_media(message_id[0], **kwargs)
+        else:
+            try:
+                response = requests.get(
+                    f"https://sp-canvas.vercel.app/spotify?id=spotify:track:{kwargs['track_details']['id']}"
+                )
+                response.raise_for_status()
+                data = response.json()
+                canvasList = data["data"]["canvasesList"]
+            except Exception as e:
+                logger.error(f"Canvas API down! {e}")
+                self.bot.edit_message_text(
+                    kwargs["chat_id"], text="A problem occured while getting the canvas. Pease try again later.", message_id=update.message_id)
+                return
+            if len(canvasList) == 0:
+                self.bot.send_message(
+                    kwargs["chat_id"],
+                    text=f"No Canvas found for `{kwargs['title']}`\n{kwargs['hashtag']}",
+                    reply_markup=kwargs["reply_markup"])
+                return
+            else:
+                video_response = requests.get(canvasList[0]["canvasUrl"])
+                video_content = video_response.content
+                cwd = str(kwargs["chat_id"])
+                os.makedirs(cwd, exist_ok=True)
+                video_path = f"{cwd}/{kwargs['title']}.mp4"
+                with open(video_path, "wb") as f:
+                    f.write(video_content)
+                preview_url = kwargs["preview_url"]
+                if preview_url is None:
+                    self.bot.edit_message_text(
+                        chat_id=kwargs["chat_id"], text="Song has no snippet, sending muted canvas.", message_id=update.message_id)
+                    self.bot.send_chat_action(
+                        kwargs["chat_id"], "upload_video")
+                    file = open(video_path, "rb")
+                    canvas = self.bot.send_video(kwargs["chat_id"], file.read(),
+                                                 caption=kwargs["hashtag"] + '🔇', reply_markup=kwargs["reply_markup"])
+                    file.close()
+                    self.bot.delete_message(kwargs['chat_id'], update.message_id)
+                    return
+                else:
+                    audio_response = requests.get(preview_url)
+                    audio_content = audio_response.content
+                    audio_path = f"{cwd}/{kwargs['title']}.mp3"
+                    with open(audio_path, "wb") as f:
+                        f.write(audio_content)
+                    output_path = f"{cwd}/{kwargs['title']}-combned.mp4"
+                    self.bot.edit_message_text(
+                        chat_id=kwargs["chat_id"], text=f"...⚡Combining canvas with audio for  `{kwargs['title']}`⚡ ...", message_id=update.message_id)
+                    canvas = combine_video_audio(
+                        video_path, audio_path, output_path)
+                    if canvas:
+                        self.bot.send_chat_action(
+                            kwargs["chat_id"], "upload_video")
+                        file = open(output_path, "rb")
+                        canvas = self.bot.send_video(kwargs["chat_id"], file.read(),
+                                                     caption=kwargs["hashtag"], reply_markup=kwargs["reply_markup"], supports_streaming=True)
+                        file.close()
+                        self.send_to_db(
+                            kwargs["chat_id"], canvas.message_id, 'video', kwargs["performer"], kwargs["title"])
+        shutil.rmtree(str(kwargs['chat_id']), ignore_errors=True)
+        self.bot.delete_message(kwargs['chat_id'], update.message_id)
+
+    def send_audios_or_previews(self, track_details, chat_id, send_photo,
+                                caption=""):
         track_url = track_details['external_url']
         title = track_details["name"]
         performer = ", ".join(track_details['artists'])
-        artists_strippped = [artist.replace(" ", '')
-                   for artist in track_details['artists']]
-        artists = [artist.translate(str.maketrans("","", string.punctuation)) for artist in artists_strippped]
+        artists_strippped = [
+            artist.replace(" ", '') for artist in track_details['artists']
+        ]
+        artists = [
+            artist.translate(str.maketrans("", "", string.punctuation))
+            for artist in artists_strippped
+        ]
         hashtag = f'{" ".join([f"#{artist}" for artist in artists])}'
         preview_url = track_details['preview_url']
+        reply_markup = self.keyboard.lyrics_handler(
+            track_details['name'], track_details['uri'])
+        song_details = {
+            'chat_id': chat_id,
+            'track_details': track_details,
+            'title': title,
+            'performer': performer,
+            'reply_markup': reply_markup,
+            'hashtag': hashtag,
+            'track_url': track_url,
+            'preview_url': preview_url
+        }
         if send_photo:
             time.sleep(1)
             keyboard = self.keyboard.link_handler(track_url)
-            self.bot.send_photo(chat_id,
-                                photo=track_details['image'],
-                                caption=caption,
+            self.bot.send_photo(chat_id, photo=track_details['image'], caption=caption,
                                 reply_markup=keyboard)
-        update = self.bot.send_message(
-            chat_id, f"...⚡Downloading track no {track_details['track_no']} - `{title}`⚡ ...")
-        retrieved_data = self.database.get_all_data("songs")
-        message_id = [message["message_id"] for message in retrieved_data if performer ==
-                      message["performer"] and title == message["title"]]
-        markup = self.keyboard.lyrics_handler(track_details['name'],
-                                              track_details['uri'])
-        if Vars.isPreview:
-            self.send_preview(chat_id, title, performer,
-                              markup, preview_url, hashtag)
-            self.bot.delete_message(chat_id, update.message_id)
-
-        elif len(message_id) > 0:
-            copied = self.bot.copy_message(
-                chat_id, DB_CHANNEL, message_id[0], reply_markup=markup, caption=hashtag)
-            try:
-                self.bot.edit_message_reply_markup(
-                    chat_id, copied.message_id, reply_markup=markup)
-            except BaseException:
-                pass
-            self.bot.delete_message(chat_id, update.message_id)
+        if Vars.isCanvas:
+            self.send_canvas(**song_details)
+        elif Vars.isPreview:
+            self.send_preview(**song_details)
         else:
-            try:
-                is_download_successfull = download(track_link=track_url, cwd=str(chat_id))
-            except Exception as e:
-                is_download_successfull = False
-                self.logger.error(f"Error during download {e}")
-            self.bot.delete_message(chat_id, update.message_id)
-            if is_download_successfull:
-                try:
-                    self.send_download(chat_id, title, performer, markup, hashtag, cwd=str(chat_id))
-                except Exception as e:
-                    self.logger.error(f"Error during sending {e}")
-                    self.send_download(chat_id, title, performer, markup, hashtag, cwd=str(chat_id))
-
-
+            self.send_song(**song_details)
 
     def get_album_songs(self, uri, chat_id):
         album_details = self.spotify.album("", "", uri)
@@ -153,72 +246,93 @@ class SongHandler:
             self.send_chosen_track(track_details, chat_id)
         else:
             caption = f'👤Artist: `{", ".join(album_details["artists"])}`\n📀 Album: `{album_details["name"]}`\n⭐️ Released: `{album_details["release_date"]}`\n🔢 Total Tracks: {album_details["total_tracks"]}'
-            keyboard = self.keyboard.link_handler(album_details["external_url"])
-            self.bot.send_photo(chat_id,
-                                album_details["images"],
-                                caption=caption,
+            keyboard = self.keyboard.link_handler(
+                album_details["external_url"])
+            self.bot.send_photo(chat_id, album_details["images"], caption=caption,
                                 reply_markup=keyboard)
             album_tracks = album_details['album_tracks']
-            for idx,track in enumerate(album_tracks):
+            for idx, track in enumerate(album_tracks):
                 id = track["uri"]
                 track_details = self.spotify.get_chosen_song(id)
                 caption = f'👤Artist: `{track_details["artists"]}`\n🔢Track : {track_details["track_no"]} of {album_details["total_tracks"]}\n🎵Song : `{track_details["name"]}`\n'
                 track_details["track_no"] = idx + 1
                 self.send_audios_or_previews(
                     track_details, chat_id, False, caption=caption)
-            self.bot.send_message(
-                chat_id,
-                f'Those are all the {track_details["total_tracks"]} track(s) in "`{album_details["name"]}`" by `{", ".join(album_details["artists"])}`. 💪!',
-                reply_markup=self.keyboard.start_markup)
+            self.bot.send_message(chat_id,
+                                  f'Those are all the {track_details["total_tracks"]} track(s) in "`{album_details["name"]}`" by `{", ".join(album_details["artists"])}`. 💪!',
+                                  reply_markup=self.keyboard.start_markup)
 
+    def send_to_db(self, chat_id, message_id, media_type, performer, title):
+        copied_msg = self.bot.forward_message(DB_CHANNEL, chat_id,
+                                              message_id)
+        data = copied_msg.json[media_type]
+        data["message_id"] = copied_msg.message_id
+        data["user_cid"] = chat_id
+        data["performer"] = performer
+        data["title"] = title
+        self.database.insert_json_data(data, media_type)
+        logger.info("Sent successfully and added to db")
 
-
-    def send_download(self, chat_id, title, performer, reply_markup, hashtag, cwd):
+    def send_download(self, **kwargs):
         lyrics = Lyrics()
-        song_lyrics = lyrics.get_lyrics(performer, title)   
+        chat_id = kwargs["chat_id"]
+        cwd = str(chat_id)
+        title = kwargs["title"]
+        performer = kwargs["performer"]
+        reply_markup = kwargs["reply_markup"]
+        song_lyrics = lyrics.get_lyrics(kwargs["performer"], title)
         for f in os.listdir(cwd):
             file_path = os.path.join(cwd, f)
-            if title in file_path:
+            if kwargs["title"] in file_path:
                 if lyrics.embedd_lyrics(file_path, song_lyrics):
                     hashtag += "  🎼"
                 with open(file_path, "rb") as file:
-                    self.logger.info(f"Sending {f}", )
+                    logger.info(f"Sending {f}", )
                     self.bot.send_chat_action(chat_id, "upload_audio")
-                    song = self.bot.send_audio(chat_id, file, title=title,
-                                               performer=performer,
+                    song = self.bot.send_audio(chat_id, file, title=title, performer=performer,
                                                reply_markup=reply_markup,
-                                               caption=hashtag, parse_mode="HTML")
-                copied_msg = self.bot.forward_message(
-                    DB_CHANNEL, chat_id, song.message_id)
-                data = copied_msg.json['audio']
-                data["message_id"] = copied_msg.message_id
-                data["user_cid"] = chat_id
-                self.database.insert_json_data(data)
-                self.logger.info("Sent successfully and added to db")
+                                               caption=hashtag,
+                                               parse_mode="HTML")
+                    self.send_to_db(chat_id, song.message_id,
+                                    'audio', performer, title)
+
         shutil.rmtree(cwd)
 
-    def send_preview(self, chat_id, title, performer,
-                     reply_markup, preview_url, hashtag):
+    def send_preview(self, **kwargs):
+        chat_id = kwargs["chat_id"]
+        title = kwargs["title"]
+        preview_url = kwargs["preview_url"]
+        reply_markup = kwargs["reply_markup"]
+        hashtag = kwargs["hashtag"]
+
+        update = self.bot.send_message(chat_id,
+                                       f"...⚡Downloading snippet of song no. {kwargs['track_details']['track_no']} - `{kwargs['title']}`⚡ ...")
         if preview_url is None:
-            self.bot.send_message(chat_id,
-                                  text=f"No Preview found for `{title}`\n{hashtag}", reply_markup=reply_markup)
+            self.bot.send_message(
+                chat_id,
+                text=f"No Preview found for `{title}`\n{hashtag}",
+                reply_markup=reply_markup)
         else:
             response = requests.get(preview_url)
             audio_content = response.content
             audio_io = BytesIO(audio_content)
             self.bot.send_chat_action(chat_id, "upload_audio")
-            self.bot.send_audio(chat_id, audio_io, title=title,
-                                performer=performer,
+            self.bot.send_audio(chat_id,
+                                audio_io,
+                                title=title,
+                                performer=kwargs['performer'],
                                 reply_markup=reply_markup,
                                 caption=hashtag)
+        self.bot.delete_message(kwargs['chat_id'], update.message_id)
 
     def send_playlist(self, uri, chat_id):
         playlist = self.spotify.sp.playlist(uri)
         owner = playlist['owner']['display_name']
         description = playlist['description']
         caption = f"👤Owner: `{owner}`\n📀 Description: `{description}`"
-        self.bot.send_photo(
-            chat_id, playlist["images"][0]["url"], caption=caption)
+        self.bot.send_photo(chat_id,
+                            playlist["images"][0]["url"],
+                            caption=caption)
         for song in playlist["tracks"]["items"]:
             id = song["track"]["id"]
             track_details = self.spotify.get_chosen_song(id)
@@ -226,6 +340,4 @@ class SongHandler:
         self.bot.send_message(
             chat_id,
             f'Those are all the {playlist["tracks"]["total"]} track(s) in "`{description}`" by `{owner}`. 💪!',
-            reply_markup=self.keyboard.start_markup)      
-            
-                                    
+            reply_markup=self.keyboard.start_markup)

@@ -139,8 +139,7 @@ def artist(message: telebot.types.Message, isPreview=False):
 
 
 @bot.message_handler(commands=["song"])
-def song(message: telebot.types.Message, isPreview=False):
-    Vars.isPreview = isPreview
+def song(message: telebot.types.Message):
     song_reply = 'Send me the song title followed by the artist separated by a "-" for optimal results'
     queries = message.queries
     song_handler = SongHandler(bot)
@@ -159,7 +158,13 @@ def song(message: telebot.types.Message, isPreview=False):
 @bot.message_handler(commands=["snippet"])
 def snippet(message: telebot.types.Message):
     Vars.isPreview = True
-    song(message, True)
+    song(message)
+
+
+@bot.message_handler(commands=["canvas"])
+def canvas(message: telebot.types.Message):
+    Vars.isCanvas = True
+    song(message)
 
 
 @bot.message_handler(commands=["snippets"])

@@ -17,7 +17,7 @@ class Database:
             return db
         except Exception as e:
             self.logger.error(f"Error occured when connecting to database: {e}")
-        
+
 
     def insert_user(self, user):
         users_collection = self.start_db()['users']
@@ -28,8 +28,10 @@ class Database:
             users_collection.insert_one(user)
             self.logger.info(f"{user['first_name']} added to Database")
 
-    def insert_json_data(self, json_data):
-        json_data_collection = self.start_db()['songs']
+    def insert_json_data(self, json_data, media_type):
+        if media_type == 'audio': collection = 'songs'
+        if media_type == 'video': collection = 'canvas'
+        json_data_collection = self.start_db()[collection]
         json_data_collection.insert_one(json_data)
         self.logger.info(f"{json_data['title']} added to Database")
 
@@ -38,4 +40,12 @@ class Database:
         cursor = data_collection.find()
         result = [item for item in cursor]
         return result
+
+    def search_data(self, collection, performer, title):
+        retrieved_data = self.get_all_data(collection)
+        message_id = [
+            message["message_id"] for message in retrieved_data
+            if performer == message["performer"] and title == message["title"]
+        ]
+        return message_id
 
