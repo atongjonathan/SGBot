@@ -5,7 +5,7 @@ from tgbot.handlers.artist_handler import ArtistHandler
 from tgbot.handlers.song_handler import SongHandler
 import billboard
 from tgbot.handlers.vars import Vars
-
+import re
 
 
 class CallbackHandler:
@@ -104,7 +104,9 @@ class CallbackHandler:
         artist = ', '.join(track_details['artists'])
         title = track_details["name"]
         try:
-            song_lyrics = self.lyrics.musicxmatch_lyrics(artist,title)
+            song_lyrics = self.lyrics.get_lyrics(artist,title)
+            pattern = r'\[\d{2}:\d{2}.\d{2}\]'
+            cleaned_lyrics = re.sub(pattern, '\n', song_lyrics)
         except Exception as e:
             self.logger.error(e)
             song_lyrics = None
@@ -114,7 +116,7 @@ class CallbackHandler:
         else:
             self.bot.answer_callback_query(call.id)
             self.bot.send_chat_action(call.message.chat.id, "typing")
-            caption = f"👤Artist: `{', '.join(track_details['artists'])}`\n🎵Song : `{track_details['name']}`\n━━━━━━━━━━━━\n📀Album : `{track_details['album']}`\n🔢Track : {track_details['track_no']} of {track_details['total_tracks']}\n⭐️ Released: `{track_details['release_date']}`\n\n🎶Lyrics📝:\n\n`{song_lyrics}`"
+            caption = f"👤Artist: `{', '.join(track_details['artists'])}`\n🎵Song : `{track_details['name']}`\n━━━━━━━━━━━━\n📀Album : `{track_details['album']}`\n🔢Track : {track_details['track_no']} of {track_details['total_tracks']}\n⭐️ Released: `{track_details['release_date']}`\n\n🎶Lyrics📝:\n\n`{cleaned_lyrics}`\n#lyrics"
             try:
                 self.bot.reply_to(call.message,
                                     text=caption,
