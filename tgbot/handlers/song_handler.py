@@ -90,13 +90,14 @@ class SongHandler:
                 reply_markup=artists_keyboard)
         except Exception as e:
             exeption_string = str(e)
-            problematic_xter = final_text[int(exeption_string.split("byte offset ")[1])]
-            final_text = final_text.replace(str(problematic_xter), f"\{problematic_xter}")
+            problematic_xter = final_text[int(
+                exeption_string.split("byte offset ")[1])]
+            final_text = final_text.replace(
+                str(problematic_xter), f"\{problematic_xter}")
             self.bot.send_message(
                 message.chat.id,
                 final_text,
                 reply_markup=artists_keyboard)
-
 
     def send_chosen_track(self, track_details, chat_id):
         duration = track_details["duration_ms"]
@@ -120,7 +121,7 @@ class SongHandler:
             self.bot.delete_message(kwargs["chat_id"], update.message_id)
         else:
             is_download_successfull = download(track_link=kwargs["track_url"],
-                                                   cwd=str(kwargs["chat_id"]))
+                                               cwd=str(kwargs["chat_id"]))
             if is_download_successfull:
                 try:
                     self.send_download(**kwargs)
@@ -184,7 +185,8 @@ class SongHandler:
                     canvas = self.bot.send_video(kwargs["chat_id"], file.read(),
                                                  caption=kwargs["hashtag"] + '🔇', reply_markup=kwargs["reply_markup"])
                     file.close()
-                    self.bot.delete_message(kwargs['chat_id'], update.message_id)
+                    self.bot.delete_message(
+                        kwargs['chat_id'], update.message_id)
                     return
                 else:
                     audio_response = requests.get(preview_url)
@@ -206,9 +208,9 @@ class SongHandler:
                         file.close()
                         self.send_to_db(
                             kwargs["chat_id"], canvas.message_id, 'video', kwargs["performer"], kwargs["title"])
-                        self.bot.delete_message(kwargs['chat_id'], update.message_id)
+                        self.bot.delete_message(
+                            kwargs['chat_id'], update.message_id)
         shutil.rmtree(str(kwargs['chat_id']), ignore_errors=True)
-
 
     def send_audios_or_previews(self, track_details, chat_id, send_photo,
                                 caption=""):
