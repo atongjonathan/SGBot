@@ -138,7 +138,8 @@ def artist(message: telebot.types.Message, isPreview=False):
                                                   lambda msg: artist_handler.search_artist(msg))
 
 
-def get_query(message):
+@bot.message_handler(commands=["song"])
+def song(message: telebot.types.Message):
     queries = message.queries
     song_handler = SongHandler(bot)
     if len(queries) > 0:
@@ -154,21 +155,16 @@ def get_query(message):
                                                   lambda msg: song_handler.search_song(msg))
 
 
-@bot.message_handler(commands=["song"])
-def song(message: telebot.types.Message):
-    get_query(message)
-
-
 @bot.message_handler(commands=["snippet"])
 def snippet(message: telebot.types.Message):
     Vars.isPreview = True
-    get_query(message)
+    song(message)
 
 
 @bot.message_handler(commands=["canvas"])
 def canvas(message: telebot.types.Message):
     Vars.isCanvas = True
-    get_query(message)
+    song(message)
 
 
 @bot.message_handler(commands=["snippets"])
