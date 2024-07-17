@@ -106,7 +106,7 @@ class CallbackHandler:
         try:
             song_lyrics = self.lyrics.get_lyrics(artist,title)
             pattern = r'\[\d{2}:\d{2}.\d{2}\]'
-            cleaned_lyrics = re.sub(pattern, '\n', song_lyrics)
+            cleaned_lyrics = re.sub(pattern, '', song_lyrics)
         except Exception as e:
             self.logger.error(e)
             song_lyrics = None

@@ -2,7 +2,9 @@ import spotipy
 from tgbot.config import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET
 from spotipy.oauth2 import SpotifyClientCredentials
 from telebot import logging
-
+import requests
+import time
+from datetime import datetime
 
 class Spotify():
     SCOPE = "playlist-modify-private"
@@ -11,7 +13,7 @@ class Spotify():
     def __init__(self) -> None:
         self.sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTIPY_CLIENT_ID,
                                                                         client_secret=SPOTIPY_CLIENT_SECRET))
-        self.logger = logging.getLogger(__name__)                                                                        
+        self.logger = logging.getLogger(__name__)
 
     def get_chosen_artist(self, uri):
         """
@@ -169,7 +171,8 @@ class Spotify():
             track_details['image'] = chosen_song['album']['images'][0]['url']
         else:
             track_details['image'] = "https://cdn.business2community.com/wp-content/uploads/2014/03/Unknown-person.gif"
-            self.logger.info(f"No image found for track {track_details['name']}")
+            self.logger.info(
+                f"No image found for track {track_details['name']}")
 
         return track_details
 
@@ -263,3 +266,56 @@ class Spotify():
                 "uri": item['uri'],
                 "artists": item["artists"][0]["name"]} for item in items]
         return album_details
+
+
+    def closest_date(self, dates, reference_date):
+        if not dates:
+            return None
+
+        ref_date = datetime.strptime(reference_date, "%Y-%m-%d")
+        closest_date = None
+        min_difference = float('inf')  # Initialize with infinity
+
+        for date_str in dates:
+            date = datetime.strptime(date_str, "%Y-%m-%d")
+            difference = abs((date - ref_date).days)
+
+            if difference < min_difference:
+                min_difference = difference
+                closest_date = date_str
+
+        return closest_date
+
+    def itunes_preview_url(self, title, performer, release_date, retries=3):
+        preview_url = None
+        try:
+            query = title + ' ' + performer
+            response = requests.get(
+                f"https://itunes.apple.com/search?term={query.replace(' ', '+')}&media=music&limit=15")
+            response.raise_for_status()
+        except requests.RequestException as e:
+            self.logger.info("First call faield retrying ...")
+            response = requests.get(
+                f"https://itunes.apple.com/search?term={query.replace(' ', '+')}&media=music&limit=15")
+            time.sleep(2)
+            if response.status_code == 503:
+                self.logger.info("Second call failed exiting.")
+                return None
+        data = response.json()
+        results = data["results"]
+
+        dates = [result["releaseDate"].split("T")[0] for result in results if "releaseDate" in result]
+
+        closest = self.closest_date(dates, release_date)
+
+        if closest:
+            for result in results:
+                if result.get("releaseDate", "").split("T")[0] == str(closest):
+                    preview_url = result["previewUrl"]
+                    break
+        else:
+            self.logger.info(f"No dates found for {title} by {performer}")
+
+
+
+        return preview_url

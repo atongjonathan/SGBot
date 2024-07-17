@@ -176,6 +176,8 @@ class SongHandler:
                     f.write(video_content)
                 preview_url = kwargs["preview_url"]
                 if preview_url is None:
+                    preview_url = self.spotify.itunes_preview_url(kwargs["title"], kwargs["performer"], kwargs["track_details"]["release_date"])
+                if preview_url is None:
                     self.bot.edit_message_text(
                         chat_id=kwargs["chat_id"], text="Song has no snippet, sending muted canvas.", message_id=update.message_id)
                     self.bot.send_chat_action(
@@ -319,6 +321,8 @@ class SongHandler:
 
         update = self.bot.send_message(chat_id,
                                        f"...⚡Downloading snippet of song no. {kwargs['track_details']['track_no']} - `{kwargs['title']}`⚡ ...")
+        if preview_url is None:
+            preview_url = self.spotify.itunes_preview_url(kwargs["title"], kwargs["performer"], kwargs["track_details"]["release_date"])
         if preview_url is None:
             self.bot.send_message(
                 chat_id,
