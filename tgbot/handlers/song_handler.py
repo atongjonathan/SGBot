@@ -31,25 +31,23 @@ class SongHandler:
         Extracts the artist and song from the string provided.
 
         Args:
-            text: str
+            message: Message object from Telegram containing the user input.
 
         Returns:
-            Artist: str
-            Title : str       
+            Tuple of (artist, title) if successful, otherwise sends an error message.
         """
-        text = message.text
-        if text == "/song":
-            self.bot.reply_to(
-                message, "Command cannot be used as a query. Try again: /song")
-            return
+        text = message.text.strip()
+        COMMAND_SONG = "/song"
+        if text == COMMAND_SONG:
+            self.bot.reply_to(message, "Command cannot be used as a query. Try again: /song")
+            return None, None
+
         if "-" not in text:
-            text + "-"
+            text += " - "
+
         data_list = text.split("-")
-        title = data_list[0]
-        try:
-            artist = data_list[1]
-        except BaseException:
-            artist = ""
+        title = data_list[0].strip()
+        artist = data_list[1].strip() if len(data_list) > 1 else ""
         return artist, title
 
     def search_song(self, message: Message):
@@ -69,10 +67,11 @@ class SongHandler:
             return
         possible_tracks = self.spotify.song(artist, title)
         no_of_results = len(possible_tracks)
+        NO_RESULTS_MESSAGE = "not found!⚠. Please check your spelling and also include special characters.\nTry again?"
         if no_of_results == 0:
             self.bot.send_message(
                 message.chat.id,
-                f"`{title}` not found!⚠. Please check your spelling and also include special characters.\nTry again?",
+                f"`{title}` + {NO_RESULTS_MESSAGE}",
                 reply_markup=self.keyboard.start_markup)
             return
         result_string = [
@@ -299,7 +298,7 @@ class SongHandler:
                 if lyrics.embedd_lyrics(file_path, song_lyrics):
                     hashtag += "  🎼"
                 with open(file_path, "rb") as file:
-                    logger.info(f"Sending {f}", )
+                    logger.info(f"Sending song: {title} by {performer} to chat_id: {chat_id}")
                     self.bot.send_chat_action(chat_id, "upload_audio")
                     song = self.bot.send_audio(chat_id, file, title=title, performer=performer,
                                                reply_markup=reply_markup,
