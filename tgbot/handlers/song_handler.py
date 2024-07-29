@@ -302,14 +302,19 @@ class SongHandler:
                 with open(file_path, "rb") as file:
                     logger.info(f"Sending song: {title} by {performer} to chat_id: {chat_id}")
                     self.bot.send_chat_action(chat_id, "upload_audio")
-                    song = self.bot.send_audio(chat_id, file, title=title, performer=performer,
+                    if type(reply_markup) == str:
+                        song = self.bot.send_audio(chat_id, file)
+                    else:
+                        song = self.bot.send_audio(chat_id, file, title=title, performer=performer,
                                                reply_markup=reply_markup,
                                                caption=hashtag,
                                                parse_mode="HTML")
-                    self.send_to_db(chat_id, song.message_id,
-                                    'audio', performer, title)
-
+                    
+                
+                        self.send_to_db(chat_id, song.message_id,
+                                        'audio', performer, title)        
         shutil.rmtree(cwd)
+        return song
 
     def send_preview(self, **kwargs):
         Vars.isPreview = False

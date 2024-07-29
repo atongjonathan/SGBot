@@ -14,7 +14,7 @@ from tgbot.config import TOKEN
 
 import telebot
 import billboard
-from keep_alive import keep_alive
+from tgbot.utils.flask_api import run_api
 
 import os
 bot = telebot.TeleBot(TOKEN, parse_mode="markdown", use_class_middlewares=True)
@@ -280,6 +280,6 @@ bot.setup_middleware(AntiFloodMiddleware(limit=5, bot=bot))
 bot.add_custom_filter(IsAdmin())
 if __name__ == "__main__":
     ascii = "\n  _________ ________  __________        __   \n /   _____//  _____/  \______   \ _____/  |_ \n \_____  \/   \  ___   |    |  _//  _ \   __\\ \n /        \    \_\  \  |    |   (  <_> )  |  \n/_______  /\______  /  |______  /\____/|__|  \n        \/        \/          \/             \n"
+    run_api()
     logger.info(ascii)
-    # keep_alive()
-    bot.infinity_polling()
+    # bot.infinity_polling()
