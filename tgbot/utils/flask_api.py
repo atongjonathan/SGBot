@@ -5,6 +5,7 @@ import os
 import json
 import telebot
 from .functions import download
+from tgbot.utils.database import Database
 from tgbot.handlers.song_handler import SongHandler
 load_dotenv("config.env")
 users_json = os.environ.get("USERS")
@@ -14,6 +15,7 @@ app = Flask(__name__)
 auth = HTTPBasicAuth()
 bot = telebot.TeleBot(TOKEN)
 song_handler = SongHandler(bot)
+database = Database()
 try:
     if users_json:
         users = json.loads(users_json)
@@ -49,8 +51,11 @@ def callback():
         try:
             song = song_handler.send_download(**kwargs)
             data = song.json["audio"]
+            data["message_id"] = data.message_id
+            data["performer"] = kwargs["performer"]
+            data["title"] = kwargs["title"]
             file_info = bot.get_file(data["file_id"])
-
+            database.insert_json_data(data, "audio")
             url = 'https://api.telegram.org/file/bot{0}/{1}'.format(
                 TOKEN, file_info.file_path)
             return jsonify({"url": url}), 200
