@@ -51,8 +51,6 @@ def callback():
         try:
             song = song_handler.send_download(**kwargs)
             data = song.json["audio"]
-            data["performer"] = kwargs["performer"]
-            data["title"] = kwargs["title"]
             file_info = bot.get_file(data["file_id"])
             database.insert_json_data(data, "audio")
             url = 'https://api.telegram.org/file/bot{0}/{1}'.format(
