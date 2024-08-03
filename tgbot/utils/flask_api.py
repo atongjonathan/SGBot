@@ -51,7 +51,6 @@ def callback():
         try:
             song = song_handler.send_download(**kwargs)
             data = song.json["audio"]
-            data["message_id"] = data.message_id
             data["performer"] = kwargs["performer"]
             data["title"] = kwargs["title"]
             file_info = bot.get_file(data["file_id"])
@@ -60,7 +59,7 @@ def callback():
                 TOKEN, file_info.file_path)
             return jsonify({"url": url}), 200
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"error": str(e), "url": None}), 500
     # return jsonify({"error": "Download Unsuccessful!"}), 500
 
 
