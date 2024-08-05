@@ -57,6 +57,8 @@ def callback():
         try:
             song = song_handler.send_download(**kwargs)
             data = song.json["audio"]
+            data["performer"] = kwargs["performer"]
+            data["title"] = kwargs["title"]
             file_info = bot.get_file(data["file_id"])
             data["performer"] = ", ".join(track_details["artists"])
             data["title"] = track_details["name"]
