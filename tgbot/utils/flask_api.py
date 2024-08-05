@@ -6,6 +6,7 @@ import json
 import telebot
 from .functions import download
 from tgbot.utils.database import Database
+from tgbot.utils.spotify import Spotify
 from tgbot.handlers.song_handler import SongHandler
 load_dotenv("config.env")
 users_json = os.environ.get("USERS")
@@ -15,6 +16,7 @@ app = Flask(__name__)
 auth = HTTPBasicAuth()
 bot = telebot.TeleBot(TOKEN)
 song_handler = SongHandler(bot)
+spotify = Spotify()
 database = Database()
 try:
     if users_json:
@@ -44,7 +46,11 @@ def start():
 def callback():
     kwargs = request.json
     kwargs["chat_id"] = DB_CHANNEL
-    kwargs["reply_markup"] = kwargs["title"] = kwargs["performer"] = kwargs["hashtag"] = ""
+    track_url = kwargs["track_url"]
+    track_details = spotify.get_chosen_song(track_url) 
+    kwargs["performer"] = ", ".join(track_details["artists"])
+    kwargs["title"] = track_details["name"]  
+    kwargs["reply_markup"] = kwargs["hashtag"] = ""
     is_download_successfull = download(track_link=kwargs["track_url"],
                                        cwd=str(kwargs["chat_id"]))
     if is_download_successfull:
@@ -52,12 +58,14 @@ def callback():
             song = song_handler.send_download(**kwargs)
             data = song.json["audio"]
             file_info = bot.get_file(data["file_id"])
+            data["performer"] = ", ".join(track_details["artists"])
+            data["title"] = track_details["name"]
             database.insert_json_data(data, "audio")
             url = 'https://api.telegram.org/file/bot{0}/{1}'.format(
                 TOKEN, file_info.file_path)
             return jsonify({"url": url}), 200
         except Exception as e:
-            return jsonify({"error": str(e), "url": None}), 500
+            return jsonify({"error": e, "url": None}), 500
     # return jsonify({"error": "Download Unsuccessful!"}), 500
 
 
