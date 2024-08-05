@@ -62,6 +62,7 @@ def callback():
             file_info = bot.get_file(data["file_id"])
             data["performer"] = ", ".join(track_details["artists"])
             data["title"] = track_details["name"]
+            data["message_id"] = song.message_id
             database.insert_json_data(data, "audio")
             url = 'https://api.telegram.org/file/bot{0}/{1}'.format(
                 TOKEN, file_info.file_path)
