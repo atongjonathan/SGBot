@@ -29,7 +29,7 @@ MarkupSafe==2.1.5
 mdurl==0.1.2
 moviepy==1.0.3
 mutagen==1.47.0
-numpy==1.26.4
+numpy
 pillow==10.3.0
 platformdirs==4.2.2
 proglog==0.1.10
