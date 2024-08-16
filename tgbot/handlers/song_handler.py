@@ -39,7 +39,8 @@ class SongHandler:
         text = message.text.strip()
         COMMAND_SONG = "/song"
         if text == COMMAND_SONG:
-            self.bot.reply_to(message, "Command cannot be used as a query. Try again: /song")
+            self.bot.reply_to(
+                message, "Command cannot be used as a query. Try again: /song")
             return None, None
 
         if "-" not in text:
@@ -176,7 +177,8 @@ class SongHandler:
                     f.write(video_content)
                 preview_url = kwargs["preview_url"]
                 if preview_url is None:
-                    preview_url = self.spotify.itunes_preview_url(kwargs["title"], kwargs["performer"], kwargs["track_details"]["release_date"])
+                    preview_url = self.spotify.itunes_preview_url(
+                        kwargs["title"], kwargs["performer"], kwargs["track_details"]["release_date"])
                 if preview_url is None:
                     self.bot.edit_message_text(
                         chat_id=kwargs["chat_id"], text="Song has no snippet, sending muted canvas.", message_id=update.message_id)
@@ -290,25 +292,37 @@ class SongHandler:
         chat_id = kwargs["chat_id"]
         cwd = str(chat_id)
         title = kwargs["title"]
+        file_special_chars = '\/:*?"<>|'
+        translator = str.maketrans('', '', file_special_chars)        
+        sanitized_title = title.translate(translator)
         performer = kwargs["performer"]
         reply_markup = kwargs["reply_markup"]
         hashtag = kwargs["hashtag"]
         song_lyrics = lyrics.get_lyrics(kwargs["performer"], title)
         for f in os.listdir(cwd):
             file_path = os.path.join(cwd, f)
-            if kwargs["title"] in file_path:
+
+            if sanitized_title in file_path:
                 if lyrics.embedd_lyrics(file_path, song_lyrics):
                     hashtag += "  🎼"
                 with open(file_path, "rb") as file:
-                    logger.info(f"Sending song: {title} by {performer} to chat_id: {chat_id}")
+                    logger.info(
+                        f"Sending song: {title} by {performer} to chat_id: {chat_id}")
                     self.bot.send_chat_action(chat_id, "upload_audio")
-                    song = self.bot.send_audio(chat_id, file, title=title, performer=performer,
-                                               reply_markup=reply_markup,
-                                               caption=hashtag,
-                                               parse_mode="HTML")
-                    self.send_to_db(chat_id, song.message_id,
-                                    'audio', performer, title)
+                    if isinstance(reply_markup, str):
+                        song = self.bot.send_audio(chat_id, file)
+                    else:
+                        song = self.bot.send_audio(chat_id, file, title=title, performer=performer,
+                                                   reply_markup=reply_markup,
+                                                   caption=hashtag,
+                                                   parse_mode="HTML")
 
+                        self.send_to_db(chat_id, song.message_id,
+                                        'audio', performer, title)
+                return song
+            else:
+                logger.info(
+                    f"Title {sanitized_title} not found in file path {file_path}")
         shutil.rmtree(cwd)
 
     def send_preview(self, **kwargs):
@@ -322,7 +336,8 @@ class SongHandler:
         update = self.bot.send_message(chat_id,
                                        f"...⚡Downloading snippet of song no. {kwargs['track_details']['track_no']} - `{kwargs['title']}`⚡ ...")
         if preview_url is None:
-            preview_url = self.spotify.itunes_preview_url(kwargs["title"], kwargs["performer"], kwargs["track_details"]["release_date"])
+            preview_url = self.spotify.itunes_preview_url(
+                kwargs["title"], kwargs["performer"], kwargs["track_details"]["release_date"])
         if preview_url is None:
             self.bot.send_message(
                 chat_id,
