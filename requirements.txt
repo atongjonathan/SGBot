@@ -68,3 +68,4 @@ wrapt==1.16.0
 yt-dlp==2024.8.6
 ytmusicapi==1.6.0
 zipp==3.18.1
+flask_httpauth
