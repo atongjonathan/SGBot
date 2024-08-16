@@ -52,7 +52,7 @@ six==1.16.0
 sniffio==1.3.1
 soundcloud-v2==1.3.7
 soupsieve==2.5
-spotdl==4.2.4
+spotdl==4.2.5
 spotipy==2.23.0
 starlette==0.27.0
 syncedlyrics==0.7.0
@@ -65,7 +65,7 @@ uvicorn==0.23.2
 websockets==12.0
 Werkzeug==3.0.2
 wrapt==1.16.0
-yt-dlp==2023.12.30
+yt-dlp==2024.8.6
 ytmusicapi==1.6.0
 zipp==3.18.1
 moviepy==1.0.3
