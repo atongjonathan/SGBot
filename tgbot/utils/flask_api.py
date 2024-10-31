@@ -40,7 +40,7 @@ def verify_password(username, password):
 
 @app.route('/', methods=['GET'])
 def start():
-    return "<h1><i>Welcome to the Spotify SG Bot API.</i></h2>"
+    return jsonify({"message": "Welcome to the Spotify SG API"}), 200
 
 # Protected route
 
