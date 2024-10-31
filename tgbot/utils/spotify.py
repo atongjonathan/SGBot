@@ -162,7 +162,7 @@ class Spotify():
             'total_tracks': chosen_song["album"]["total_tracks"],
             'track_no': chosen_song["track_number"],
             'uri': chosen_song["uri"],
-            'preview_url': chosen_song["preview_url"],
+            'preview_url': chosen_song.get("preview_url"),
             'external_url': chosen_song["external_urls"]["spotify"],
             'duration_ms': chosen_song["duration_ms"],
             'explicit': chosen_song["explicit"],
